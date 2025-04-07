@@ -1,7 +1,11 @@
 // SPI - Version: Latest 
 #include <Arduino.h>
 #include <Bounce2.h>
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 #include "pitches.h"
+
+LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 // notes in the melody:
 int melody[] = {
@@ -123,6 +127,20 @@ bool CheckRightButton(int realButton, int pressedButton)
 
 }
 
+void showScore(){
+  lcd.clear();
+  lcd.print("Score");
+  lcd.setCursor(0,1);
+  lcd.print(score);
+}
+
+void defaultScreen() {
+  lcd.clear();
+  lcd.print("Select game");
+  lcd.setCursor(0,1);
+  lcd.print("Red or Blue");
+}
+
 /*
   Play the game
 */
@@ -172,6 +190,7 @@ void PlayGame()
         if(CheckRightButton(randButton, i))
         {
           score ++;
+          showScore();
           // Turn off the button
           SetLED(LOW, LED[randButton]);
           
@@ -212,8 +231,10 @@ void PlayGame()
     noTone(piezoPin);
   }
 
-  Serial.print("Score:");
-  Serial.println(score);
+  SetLEDs(0);
+  showScore();
+  delay(4000);
+  defaultScreen();
   Debug("Score--------------------------------------------: ", score);
 }
 
@@ -263,6 +284,7 @@ void PlayGameSpeed()
         if(CheckRightButton(randButton, i))
         {
           score ++;
+          showScore();
           // Turn off the button
           SetLED(LOW, LED[randButton]);
           
@@ -309,8 +331,10 @@ void PlayGameSpeed()
     noTone(piezoPin);
   }
 
-  Serial.print("Score:");
-  Serial.println(score);
+  SetLEDs(0);
+  showScore();
+  delay(4000);
+  defaultScreen();
   Debug("Score--------------------------------------------: ", score);
 }
 
@@ -329,13 +353,15 @@ void CountDown()
   delay(500);
 }
 
-
 /*
   Set up the game
 */
 void setup() {
   // Set up the seed
   randomSeed(analogRead(0));
+
+  lcd.init();                      // initialize the lcd 
+  lcd.backlight();
 
   Serial.begin(9600);
   
@@ -347,8 +373,8 @@ void setup() {
     buttons[i].interval(25);              // interval in ms
   }
   blinkTime = millis() + 1000;
+  defaultScreen();
 }
-
 
 /*
   The main loop
@@ -359,6 +385,10 @@ void loop()
 
   if(digitalRead(BUTTON[0]) == LOW)
   {
+    lcd.clear();
+    lcd.print("Time game");
+    lcd.setCursor(0,1);
+    lcd.print("Hit as many");
     ledTimeDur = 1000;
     score = 0;
     tone(piezoPin, 2000, 1000);
@@ -366,12 +396,18 @@ void loop()
     // Countdown to start
     CountDown();
 
+    lcd.clear();
+    lcd.print("GO GO GO");
     // Play the game
     PlayGame();
   }
 
   if(digitalRead(BUTTON[1]) == LOW)
   {
+    lcd.clear();
+    lcd.print("Error game");
+    lcd.setCursor(0,1);
+    lcd.print("Hit until wrong");
     ledTimeDur = 1000;
     score = 0;
     tone(piezoPin, 2000, 1000);
@@ -379,6 +415,8 @@ void loop()
     // Countdown to start
     CountDown();
 
+    lcd.clear();
+    lcd.print("GO GO GO");
     // Play the game
     PlayGameSpeed();
   }
@@ -400,5 +438,3 @@ void loop()
 
   
 }
-
-
